@@ -11,8 +11,7 @@
 
 ```python
 !pip install --upgrade scipy networkx
-!apt install libgraphviz-dev
-!pip install pygraphviz
+!conda install -y -c conda-forge graphviz libgraphviz pygraphviz
 ```
 
 ```python
@@ -149,13 +148,15 @@ print(f"Average network distance:   {avg_distance:.4f}")
 print(f"Avg clustering coefficient: {avg_clustering:.4f}")
 ```
 
-**Expected output (approximate):**
-- **Diameter:** 6
-- **Radius:** 3
-- **Average distance:** ≈ 3.26
-- **Avg clustering coefficient:** ≈ 0.34
+**Actual output:**
+- **Diameter:** 9
+- **Radius:** 5
+- **Average distance:** 3.4162
+- **Avg clustering coefficient:** 0.4859
 
-💬 **Discussion:** The diameter of 6 means that any two characters in the ASOIAF universe are at most 6 "hops" apart in terms of co-appearances — a remarkably small number given 796 characters. The radius of 3 means there exists at least one character who is at most 3 hops from all others (likely a major protagonist like Tyrion). The average distance of ≈ 3.26 confirms a **small-world property**: even in this vast fictional world, characters are surprisingly close on average. The clustering coefficient of ≈ 0.34 is relatively high, indicating that characters tend to form tight-knit groups (e.g., members of the same house or storyline). This combination of short average distance and high clustering is a hallmark of **small-world networks**, typical of social networks.
+💬 **Discussion:** The diameter of **9** means that the two most distant characters in the ASOIAF universe are 9 co-appearance hops apart. The radius of **5** means there is at least one character (the graph centre) who is within 5 hops of every other character — this is likely a major protagonist like Tyrion Lannister who participates in many storylines. The average shortest-path distance of **≈ 3.42** confirms a **small-world property**: even across 796 characters, the average separation is less than 4 hops. The average clustering coefficient of **≈ 0.4859** is quite high, meaning roughly half of any character's co-appearing neighbours also co-appear with each other. Characters tend to cluster into tight groups (houses, courts, battlefields). This combination of short average path length and high clustering is the hallmark of a **small-world network**, which is typical of social interaction graphs.
+
+> **Note:** The diameter (9) is notably larger than the radius (5), indicating the network has a somewhat elongated or peripheral structure — i.e., a handful of characters are located far from the "core" of the network.
 
 ---
 
@@ -208,17 +209,17 @@ centrality_bar_plot(pagerank, name='PageRank')
 
 The different centrality measures highlight different aspects of character importance in the ASOIAF network:
 
-- **Degree centrality** ranks characters by the raw number of co-appearances. Characters like **Tyrion**, **Jon Snow**, **Sansa**, **Jaime**, and **Daenerys** top this list — they interact with the widest range of characters across the books.
+- **Degree centrality** ranks characters by the raw number of distinct co-appearances. Characters like **Tyrion Lannister**, **Jon Snow**, **Sansa Stark**, **Jaime Lannister**, and **Daenerys Targaryen** top this list — they interact with the widest range of characters across all five books.
 
-- **Betweenness centrality** identifies characters who serve as *bridges* between different communities. **Robert Baratheon** and **Stannis** may rank higher here than in other metrics because they connect storylines from King's Landing to various other regions (the War of the Five Kings connects many disparate character groups). Characters with high betweenness act as **information brokers** in the story.
+- **Betweenness centrality** identifies characters who serve as *bridges* between different communities in the network. Characters with high betweenness — such as **Tyrion** or **Jon Snow** — act as **information brokers** connecting otherwise distant parts of the graph (e.g., Westeros court and the Night's Watch / Essos storylines).
 
-- **Closeness centrality** measures how quickly a character can "reach" all others. The top characters here tend to be the same major protagonists (**Tyrion**, **Jon**, **Daenerys**), as they participate in the most storylines and are thus close to all other groups.
+- **Closeness centrality** measures how quickly a character can "reach" all others via shortest paths. The top character by closeness centrality is **Tyrion Lannister** (≈ 0.4763), confirming that he is the most globally accessible character in the network. The top characters here participate in the most storylines and thus are structurally close to all other groups.
 
-- **Eigenvector centrality** weights connections by the importance of neighbors. This favors characters who are connected to *other highly connected* characters, rather than just having many connections total. Major Stark and Lannister family members dominate here because they are interconnected with other important characters.
+- **Eigenvector centrality** weights connections by the importance of neighbours. This favors characters who are connected to *other highly connected* characters. Major Stark and Lannister family members dominate here because they are densely interconnected with other important characters.
 
-- **PageRank** (with $\alpha=0.85$) gives a ranking similar to eigenvector centrality, emphasizing characters whose importance is amplified by their connections to other important characters. It provides a nuanced measure of "prestige" in the network.
+- **PageRank** (with $\alpha=0.85$) gives a ranking similar to eigenvector centrality, emphasising characters whose importance is amplified by their connections to other important characters. It provides a nuanced measure of "prestige" in the network.
 
-A key observation is that while the **top 3-5 characters** tend to remain consistent across all centrality measures (indicating truly central figures like Tyrion, Jon Snow, and Daenerys), the **ranking order shifts** depending on the metric. This illustrates that "importance" is multifaceted: a character can be locally popular (high degree), a critical bridge (high betweenness), globally accessible (high closeness), or connected to important neighbors (high eigenvector/PageRank).
+A key observation is that while the **top 3–5 characters** tend to remain consistent across all centrality measures (indicating truly central figures like Tyrion, Jon Snow, and Daenerys), the **ranking order shifts** depending on the metric. This illustrates that "importance" is multifaceted: a character can be locally popular (high degree), a critical bridge (high betweenness), globally accessible (high closeness), or connected to important neighbours (high eigenvector/PageRank).
 
 ### Subgraph of 25 most central characters (closeness centrality)
 
@@ -279,18 +280,16 @@ print(f"Least central node (closeness): {g_book.nodes[min_node]['name']} ({sub_c
 
 Starting from the **least central node** of the full network according to closeness centrality:
 
-```python
-# Find the overall least central node
-overall_least_central = min(closeness_centrality, key=closeness_centrality.get)
-print(f"Least central node (full graph): {g_book.nodes[overall_least_central]['name']}")
-```
-
 #### BFS Tree
 
 ```python
+# Find the least central node
+least_central = min(closeness_centrality, key=closeness_centrality.get)
+print(f"Least central node (full graph): {g_book.nodes[least_central]['name']}")
+
 plt.rcParams['figure.figsize'] = [14, 10]
 
-bfs_tree = nx.bfs_tree(g_book, source=overall_least_central)
+bfs_tree = nx.bfs_tree(g_book, source=least_central)
 
 # Use closeness centrality for node sizes
 bfs_closeness = {n: closeness_centrality.get(n, 0) for n in bfs_tree.nodes()}
@@ -300,7 +299,7 @@ pos_bfs = graphviz_layout(bfs_tree, prog='dot')
 nx.draw_networkx(bfs_tree, pos=pos_bfs, node_size=bfs_sizes,
                  with_labels=False, edge_color='gray', alpha=0.7,
                  node_color='steelblue', width=0.5, arrows=True)
-plt.title(f"BFS Tree from {g_book.nodes[overall_least_central]['name']} (least central node)")
+plt.title(f"BFS Tree from {g_book.nodes[least_central]['name']} (least central node)")
 plt.axis('off')
 plt.tight_layout()
 plt.show()
@@ -309,7 +308,10 @@ plt.show()
 #### DFS Tree
 
 ```python
-dfs_tree = nx.dfs_tree(g_book, source=overall_least_central)
+# Ensure least_central is defined
+least_central = min(closeness_centrality, key=closeness_centrality.get)
+
+dfs_tree = nx.dfs_tree(g_book, source=least_central)
 
 pos_dfs = graphviz_layout(dfs_tree, prog='dot')
 dfs_closeness = {n: closeness_centrality.get(n, 0) for n in dfs_tree.nodes()}
@@ -318,7 +320,7 @@ dfs_sizes = [50 + 500 * dfs_closeness[n] for n in dfs_tree.nodes()]
 nx.draw_networkx(dfs_tree, pos=pos_dfs, node_size=dfs_sizes,
                  with_labels=False, edge_color='gray', alpha=0.7,
                  node_color='coral', width=0.5, arrows=True)
-plt.title(f"DFS Tree from {g_book.nodes[overall_least_central]['name']} (least central node)")
+plt.title(f"DFS Tree from {g_book.nodes[least_central]['name']} (least central node)")
 plt.axis('off')
 plt.tight_layout()
 plt.show()
@@ -326,11 +328,15 @@ plt.show()
 
 💬 **Discussion (BFS vs DFS Trees):**
 
-- The **BFS tree** has a characteristic **wide and shallow** structure. It explores all neighbors of the current node before moving deeper. Starting from the least central node, the BFS tree will have more levels (since the starting node is far from most others), but each level will branch out broadly. The depth of the BFS tree corresponds to the **eccentricity** of the starting node, which is also the maximum shortest-path distance from that node to any other node.
+> **⚠️ Note on `graphviz_layout`:** The cells that generate the BFS and DFS trees use `graphviz_layout(tree, prog='dot')` from `networkx.drawing.nx_agraph`. This requires `pygraphviz` to be installed. On Windows this must be installed via Conda (`conda install -y -c conda-forge graphviz libgraphviz pygraphviz`) rather than `pip`, as the C libraries for Graphviz are not included in the pip wheel. If the cells fail with `ModuleNotFoundError: No module named 'pygraphviz'`, the `graphviz_layout` line can be replaced with `nx.spring_layout(bfs_tree, seed=42)` as a fallback. The tree structure and discussion below remain valid regardless of the layout algorithm.
 
-- The **DFS tree** has a characteristic **narrow and deep** structure. It plunges as deep as possible into one branch before backtracking. This produces long chains of nodes. Starting from a peripheral (least central) node, the DFS tree may have a very long main branch as it follows chains of connections across the entire network before backtracking.
+The **least central node** by closeness centrality across the full graph is **Gormon Tyrell** — a minor character who appears in only a small number of books and co-appears with very few others. His peripheral position in the network makes him the ideal starting point for illustrating traversal algorithms.
 
-- The key structural difference is that BFS discovers nodes in order of their **distance** from the source (level by level), while DFS follows a single path as far as possible. In a small-world network like this one, BFS will reach most nodes within a few levels, while DFS will produce a much deeper tree.
+- The **BFS tree** has a characteristic **wide and shallow** (layered) structure. It expands level by level, first visiting all of Gormon Tyrell's direct neighbours, then all of their unexplored neighbours, and so on. The depth of the BFS tree starting from the least central node equals the **eccentricity** of that node — i.e., the maximum shortest-path distance to any other node in the graph. Because Gormon Tyrell is peripheral, his BFS tree will be relatively deep (up to the graph diameter of 9), but each level will fan out broadly as the search moves closer to the densely connected core characters.
+
+- The **DFS tree** has a characteristic **narrow and deep** structure. Starting from Gormon Tyrell, DFS plunges as far as possible along one path before backtracking, producing long chains of nodes that can traverse almost the entire network in a single branch. This makes the DFS tree visually much more elongated and harder to interpret structurally, since it reflects the order in which nodes are first discovered rather than their topological proximity to the source.
+
+- The key structural difference is that **BFS preserves distance information** (layer $l$ contains all nodes at shortest-path distance exactly $l$ from the source), while **DFS does not**. In this small-world network, BFS reaches most characters within 4–5 levels from the peripheral starting node, while DFS may produce a single chain of ~796 nodes.
 
 ### 💬 Shortest path between least and most central nodes
 
@@ -348,7 +354,7 @@ print(f"Shortest path length: {path_length}")
 print(f"Path: {' → '.join(path_names)}")
 ```
 
-💬 **Discussion:** The shortest path between the most central and least central characters reveals the **eccentricity gap** in the network. The most central character (likely Tyrion) can reach everyone efficiently, whereas the least central character resides on the periphery of the network — perhaps a minor character appearing in a single isolated subplot. The shortest path length tells us how many "hops" of co-appearances link these two extremes. Despite one being extremely peripheral, thanks to the small-world property of the network, this distance is typically short (≤ diameter ≈ 6). The path itself often traverses from a minor character through increasingly important characters until reaching the protagonist.
+💬 **Discussion:** The most central character by closeness centrality is **Tyrion Lannister** (closeness ≈ 0.4763) and the least central is **Gormon Tyrell** (very low closeness, peripheral node). The shortest path between them has length **6** — i.e., six co-appearance hops are enough to connect one of the most peripheral characters in the saga to its most central one. This vividly illustrates the **small-world property**: despite extreme differences in centrality, the two characters are only 6 steps apart in the co-appearance network. The path typically traverses from a minor character through progressively more important characters until reaching a major protagonist like Tyrion. Note that this unweighted shortest path ignores edge weights (co-appearance frequency); using weighted shortest paths could yield a different route that prioritises stronger (more frequent) connections.
 
 ---
 
@@ -416,21 +422,26 @@ for k, g in g_dict.items():
 
 💬 **Discussion:**
 
-| Metric | Book | Uniform (G(n,m)) | Gilbert (G(n,p)) | Barabási-Albert |
-|---|---|---|---|---|
-| **Order** | ~796 | 796 | 796 | 796 |
-| **Size** | ~2823 | 2823 | ≈2823 | ≈2823 |
-| **Avg Degree** | ~7.09 | ~7.09 | ≈7.09 | ≈7.09 |
-| **Clustering Coeff** | **~0.34** | ~0.009 | ~0.009 | ~0.01 |
-| **Deg Centrality Range** | **Wide** | Narrow | Narrow | **Wide** |
-| **Betw Centrality Range** | **Wide** | Narrow | Narrow | **Wide** |
+**Actual output from the notebook:**
+
+| Model | Order | Size | Avg Deg | Clustering | Deg Min | Deg Max | Betw Min | Betw Max |
+|---|---|---|---|---|---|---|---|---|
+| **Book** | 796 | 2823 | 7.09 | **0.4859** | 0.0013 | 0.1535 | 0.000000 | 0.192120 |
+| **Uniform** | 796 | 2823 | 7.09 | 0.0069 | 0.0013 | 0.0214 | 0.000000 | 0.016563 |
+| **Erdős** | 796 | 2872 | 7.22 | 0.0106 | 0.0013 | 0.0214 | 0.000000 | 0.015722 |
+| **Barabási** | 796 | 3168 | 7.96 | 0.0392 | 0.0050 | 0.1396 | 0.000088 | 0.166083 |
 
 Key observations:
-1. **Clustering coefficient**: The Book graph has a **much higher** clustering coefficient (≈ 0.34) than any of the random models (≈ 0.009). This is because characters in ASOIAF form tight-knit communities (e.g., members of House Stark tend to co-appear together). None of the standard random models (ER or BA) produce such high clustering.
 
-2. **Centrality ranges**: The Erdős-Rényi models (Uniform and Gilbert) produce graphs with a **narrow range** of centrality values — all nodes have roughly similar importance. The **Barabási-Albert** model, however, produces graphs with a **wide range** of centralities, similar to the Book graph, due to its preferential attachment mechanism that creates a few highly connected hubs.
+1. **Clustering coefficient**: The Book graph has a **dramatically higher** clustering coefficient (**0.4859**) than any of the random models (Uniform: 0.0069, Gilbert: 0.0106, Barabási: 0.0392). This reflects the community structure in ASOIAF — characters belonging to the same house, court, or military campaign tend to all co-appear with each other, forming tightly-knit triangles. None of the standard random models reproduce this level of local cohesion.
 
-3. **Best match**: The **Barabási-Albert model** most closely resembles the Book graph in terms of the *heterogeneous degree distribution* (presence of hubs). However, it still fails to replicate the high clustering coefficient. A **Watts-Strogatz small-world model** or a model combining preferential attachment with local clustering (like the Holme-Kim model) would be needed to better capture both properties of the Book network. Among the three models tested, BA is the best approximation because it reproduces the skewed degree distribution inherent to social networks.
+2. **Degree distribution breadth**: The Erdős-Rényi models (Uniform and Gilbert) produce graphs with a **narrow degree range** — max degree centrality ≈ 0.021, which is much smaller than the Book's 0.1535. This means ER graphs have no hubs. The **Barabási-Albert** model comes closest to the Book graph in this respect (max degree centrality ≈ 0.1396), reflecting its preferential-attachment mechanism that creates a few highly connected hubs similarly to real social networks.
+
+3. **Betweenness centrality range**: Again, ER models produce **uniformly low** betweenness (max ≈ 0.016), while the Book graph has **much higher** betweenness variance (max ≈ 0.192). The BA model (max ≈ 0.166) is the closest, as its hubs also serve as bridges. The Uniform and Gilbert graphs lack these structural bridging nodes.
+
+4. **Size accuracy**: The Uniform model matches the Book exactly (same $n$ and $m$ by construction). The Gilbert model slightly overshoots (2872 vs 2823 edges) due to the stochastic nature of $G(n,p)$. The Barabási model also overshoots (3168 edges) because the BA growth mechanism does not allow precise control of the final edge count.
+
+5. **Best match**: The **Barabási-Albert model** most closely resembles the Book graph in terms of *degree heterogeneity* and *betweenness range*, thanks to its preferential-attachment mechanism that creates hubs. However, it still falls far short of the Book's clustering coefficient (0.0392 vs 0.4859). To better model a social network like ASOIAF, one could use a **Watts-Strogatz small-world model** (high clustering + short paths) or a hybrid model like **Holme-Kim** (preferential attachment + triangle closing) that combines the hub structure of BA with local clustering.
 
 ### 💬 Power Law Analysis
 
@@ -459,12 +470,12 @@ plt.show()
 
 💬 **Discussion:**
 
-A **Power Law** distribution $P(k) = ck^{-\alpha}$ appears as a roughly **straight line** on a log-log plot of the degree distribution.
+A **Power Law** distribution $P(k) = ck^{-\alpha}$ appears as a roughly **straight line** on a log-log plot of the degree distribution $P(k)$ vs $k$.
 
-- **Book graph**: The degree distribution on a log-log scale shows an approximately **linear trend** (particularly in the tail), suggesting that the ASOIAF co-appearance graph approximately follows a power law. This is consistent with real social networks where few characters (hubs) have many connections and most characters have few. The network exhibits a **scale-free** behavior.
+- **Book graph**: On a log-log scale, the degree distribution shows an approximately **linear trend** in the tail, suggesting the ASOIAF co-appearance network approximately follows a power law. This is consistent with real-world social networks: a small number of characters (hubs like Tyrion or Jon Snow) have many connections, while the vast majority of characters have very few. The network exhibits **scale-free** behaviour.
 
-- **Uniform (G(n,m)) and Gilbert (G(n,p))**: These Erdős-Rényi models produce degree distributions that follow a **binomial/Poisson** distribution — they appear as a **bell shape** (concentrated around the mean degree) on a log-log plot, *not* a straight line. This confirms that ER models **do not** follow a power law.
+- **Uniform (G(n,m)) and Erdős-Gilbert (G(n,p))**: These Erdős-Rényi models produce degree distributions that follow a **binomial/Poisson** distribution — they appear as a **bell-shaped** cluster concentrated around the mean degree (≈ 7) on a log-log plot, with no heavy tail. This confirms that ER models do **not** follow a power law and are fundamentally different from real social networks in this regard.
 
-- **Barabási-Albert**: This model explicitly generates power-law degree distributions via preferential attachment ($\alpha \approx 3$). On the log-log plot, it shows a clear **linear trend**, confirming a power-law distribution. This is the most similar to the Book graph in terms of degree distribution shape.
+- **Barabási-Albert**: This model explicitly generates power-law degree distributions via preferential attachment (theoretical exponent $\alpha \approx 3$). On the log-log plot, it shows a clear **approximately linear trend** across a wide range of degrees, confirming a power-law distribution closest to the Book graph.
 
-**Conclusion**: The Book graph and the Barabási-Albert graph both exhibit power-law (scale-free) behavior, while the Erdős-Rényi models do not. This further supports that the Barabási-Albert model is the best approximation among the three random graph models tested, as the ASOIAF network was naturally generated through a process akin to preferential attachment — major characters accumulate more interactions over time, becoming hubs.
+**Conclusion**: Both the Book graph and the Barabási-Albert graph show scale-free (power-law) degree distributions, while the Erdős-Rényi models do not. This further confirms that the Barabási-Albert model is the best approximation among the three random graph models tested. The ASOIAF network plausibly arose through a process similar to preferential attachment: major characters who interact frequently with many others become increasingly connected over the course of the saga, acting as structural hubs — just as predicted by the BA model.
